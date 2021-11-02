@@ -1,0 +1,16 @@
+[Unit]
+Description=sersync service
+After=network.target network-online.target syslog.target
+Wants=network.target network-online.target
+
+[Service]
+Type=simple
+
+ExecStart=/usr/local/sersync/sersync2 -r  -o /usr/local/sersync/confxml.xml >/usr/local/sersync/rsync.log 2>&1
+Restart=on-failure
+RestartSec=30 
+ExecStop=/usr/bin/pkill sersync2
+
+[Install]
+WantedBy=multi-user.target
+

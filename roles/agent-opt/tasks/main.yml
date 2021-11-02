@@ -1,0 +1,10 @@
+- name: 渲染分发docker-compose yaml到各个节点agent
+  template: src=docker-compose.yaml.j2 dest=/tmp/docker-compose.yaml
+
+- name: 启动docker-compose
+  shell: cd /tmp && docker-compose up -d  && docker-compose ps 
+
+
+
+
+

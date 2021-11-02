@@ -1,0 +1,16 @@
+mysql_host: "mysql.middleware.svc.cluster.local:3306"
+mysql_user: "root"
+mysql_password: "root" #不同之处
+redis_host: "redis.middleware.svc.cluster.local:6379"
+redis_password: ""
+mongo_user: "admin"
+mongo_password: "admin"
+mongo_host: "mongodb://{{ mongo_user }}:{{ mongo_password }}@mongodb.middleware.svc.cluster.local:27017/seetaas?authSource=admin"
+harbor_host: "192.168.1.53:5000"   #内网harbor镜像仓库地址
+rabbitmq_host: "rabbitmq.middleware.svc.cluster.local:5672"
+rabbitmq_password: "seetatech123!!!"
+rabbitmq_user: "admin"
+influxdb_host: "106.38.203.204:8086"
+influxdb_token: "ftebdKMQ_pH1-UpRUlJvVTgXc409eN9sW0M3gc7WFehavdpR-tzjrpaMTDlwNQ2NvgUkiOO5rClTBTxJhtASRQ=="
+frp_host: "106.38.203.204:7000"
+gpuhub_server: http://106.38.203.204:33000/

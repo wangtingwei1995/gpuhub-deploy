@@ -1,0 +1,9 @@
+- name: agent节点初始化操作
+  hosts: nfs-all
+  remote_user: root
+  roles:
+    - nfs-deploy
+  vars_files:
+  - environments/{{ ENV }}/group_vars/all.yml
+
+

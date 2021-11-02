@@ -1,0 +1,11 @@
+{
+    "insecure-registries":["{{ HARBOR_HOST }}"],
+    "registry-mirrors": ["https://hub-mirror.c.163.com","https://rrkngb5t.mirror.aliyuncs.com"],
+    "default-runtime": "nvidia",
+    "runtimes": {
+        "nvidia": {
+            "path": "/usr/bin/nvidia-container-runtime",
+            "runtimeArgs": []
+        }
+    }
+}

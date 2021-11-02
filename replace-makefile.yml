@@ -1,0 +1,8 @@
+- name: 修改Makefile中的harbor_host为{{ HARBOR_HOST }}
+  hosts: master
+  remote_user: root
+  roles:
+    - replace-makefile
+  vars_files:
+  - environments/{{ ENV }}/group_vars/all.yml 
+

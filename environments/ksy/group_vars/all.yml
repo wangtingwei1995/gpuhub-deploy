@@ -1,0 +1,9 @@
+ENV: ksy     #对应你的变量所在的environments子目录名称
+BASE_DIR: /root/gpuhub-deploy
+HARBOR_HOST: 192.168.1.53:5000  #必须修改
+PUBELIC_REPO: apt.gpushare.seetatech.com
+DISK: vdb
+MOUNT_PATH: /data
+DOCKER_DATA_PATH: /data/docker
+TMP_RESOURCE: /root
+GPUHUB_WORKSPACE: /home/wangtingwei/workspace

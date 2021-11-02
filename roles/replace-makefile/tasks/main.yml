@@ -1,0 +1,18 @@
+- name: 匹配kpl和gpuhub服务所有Makefile文件将其注册为变量
+  shell: find {{GPUHUB_WORKSPACE}} -maxdepth 3 -type f -name "Makefile" && find {{GPUHUB_WORKSPACE}}/src/server/cmd/server -maxdepth 1  -type f -name "Makefile"
+  register: Makefile_result
+
+- name: 使用replace模块将Makefile中基础镜像地址改为私有仓库
+  replace: dest={{ item }} regexp="harbor_host" replace='{{ HARBOR_HOST}}'
+  with_items:
+  - "{{ Makefile_result.stdout_lines }}"
+
+
+- name: 匹配gpuhub  server 的Makefile文件将其注册为变量
+  shell: find {{GPUHUB_WORKSPACE}}/src/server/cmd/server -maxdepth 1  -type f -name "Makefile"
+  register: Makefile_result_server
+
+- name: 使用replace模块将Makefile中基础镜像地址改为私有仓库
+  replace: dest={{ item }} regexp="harbor_host" replace='{{ HARBOR_HOST}}'
+  with_items:
+  - "{{ Makefile_result_server.stdout_lines }}"

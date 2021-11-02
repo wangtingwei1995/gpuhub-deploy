@@ -1,0 +1,27 @@
+! Configuration File for keepalived
+global_defs {
+    router_id nfs 
+}
+vrrp_script chk_nfs {
+    script "/etc/keepalived/nfs_check.sh"   
+    interval 2
+    weight -20  
+}
+vrrp_instance VI_1 {
+    state BACKUP   
+    interface {{ ansible_default_ipv4['interface'] }} 
+    virtual_router_id 51
+    priority 80  
+    advert_int 1
+    nopreempt      
+    authentication {
+        auth_type PASS
+        auth_pass XcSqeOUjW3TpmptR
+    }  
+    track_script {
+        chk_nfs
+    }
+    virtual_ipaddress {
+        {{ nfs_vip }}
+    }
+}

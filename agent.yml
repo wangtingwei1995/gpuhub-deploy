@@ -1,0 +1,9 @@
+- name: agent节点初始化操作
+  hosts: agent
+  remote_user: root
+  roles:
+    - agent
+  vars_files:
+  - environments/{{ ENV }}/group_vars/all.yml
+
+

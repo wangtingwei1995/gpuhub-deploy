@@ -1,0 +1,16 @@
+version: '3.9'
+services:
+  ga: # 指定服务名称
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - GA_RUNTIME=docker-compose
+    network_mode: "host"
+    runtime: nvidia
+    image: hub.kce.ksyun.com/kpl_k8s/agent:latest
+    volumes:
+      - /data:/data
+      - /var/run:/var/run
+    privileged: true
+    restart: always
+    command: [ ga, run, -u, "{{ gpuhub_server }}"]   #http://106.38.203.204:33000/
+

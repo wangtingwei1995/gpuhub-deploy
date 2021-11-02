@@ -1,0 +1,27 @@
+! Configuration File for keepalived
+global_defs {
+    router_id  nfs  #id可以随便设
+}
+vrrp_script chk_nfs {
+    script "/etc/keepalived/nfs_check.sh"    #监控脚本
+    interval 2
+    weight -20   #keepalived部署了两台，所以设为20，如果三台就设为30
+}
+vrrp_instance VI_1 {
+    state BACKUP    #两台主机都设为backup非抢占模式
+    interface {{ ansible_default_ipv4['interface'] }}  #网卡接口
+    virtual_router_id 51
+    priority 100    #master设为100，backup设为80，反正要比100小
+    advert_int 1
+    nopreempt       #设置为非抢占模式必须要该参数
+    authentication {
+        auth_type PASS
+        auth_pass XcSqeOUjW3TpmptR
+    }  
+    track_script {
+        chk_nfs
+    }
+    virtual_ipaddress {
+        {{ nfs_vip }}     #虚拟ip
+    }
+}

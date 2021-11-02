@@ -1,0 +1,10 @@
+- name: agent节点初始化操作
+  hosts: agent
+  remote_user: root
+  roles:
+    - agent-update
+  vars_files:
+  - environments/{{ ENV }}/group_vars/all.yml
+  - environments/{{ ENV }}/group_vars/gpuhub.yml
+
+

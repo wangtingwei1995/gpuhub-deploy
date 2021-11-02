@@ -1,0 +1,23 @@
+#要求ansible版本2.5.1之上
+- name: 在tmp目录创建渲染目标目录
+  file: path=/tmp/configmap-kpl/{{ item }} state=directory
+  with_items:
+  - gpuhub
+
+- name: 渲染分发gpuhub的configmap配置文件
+  template: src={{ item }} dest=/tmp/configmap-kpl/gpuhub/{{ item | basename | regex_replace('.j2','') }}
+  with_fileglob:
+  - "{{ TMP_RESOURCE }}/configmap-kpl/gpuhub/*.j2"
+
+
+
+- name: 执行kubectl apply创建configmap配置文件
+  shell: kubectl apply -f {{ item }}
+  register: configmap_result
+  with_items:
+  - /tmp/configmap-kpl/gpuhub
+
+- name: 显示apply configmap后输出信息
+  debug: msg={{ item.stdout_lines }}
+  with_items:
+  - "{{ configmap_result.results }}"

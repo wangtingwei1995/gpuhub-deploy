@@ -1,0 +1,120 @@
+#################nfs相关配置######################
+
+- name: 分发nfs disk初始化脚本
+  copy: src=disk.sh dest=/tmp/disk.sh
+
+
+- name: nfs磁盘ext4分区以及自动挂载设置
+  script: /tmp/disk.sh "{{ DISK }}" "{{ MOUNT_PATH  }}"   
+
+
+#- name: 增加apt gpushare 专有apt源
+#  shell: echo "当前环境是在线环境，设置apt源为公网源" && sleep 3 && \
+#         mv /etc/apt/sources.list /etc/apt/sources.list.bak && \
+#         echo "deb {{ PUBULIC_REPO }} debs/" >/etc/apt/sources.list
+         
+- name: 下载安装nfs
+  shell: export DEBIAN_FRONTEND=noninteractive && apt  update  --allow-insecure-repositories && apt install nfs-kernel-server -y
+  ignore_errors: yes
+
+
+- name: 分发配置文件并配置nfs
+  template: src=nfs.conf.j2 dest=/etc/exports
+
+- name: 重启nfs配置
+  shell: "systemctl daemon-reload && service nfs-kernel-server restart"
+
+
+- name: 设置nfs开机自启
+  service: name=nfs-kernel-server   state=started enabled=true
+
+#########################keepalive相关配置############
+
+- name: 下载安装keepalived
+  shell: export DEBIAN_FRONTEND=noninteractive && apt  update  --allow-insecure-repositories && apt install keepalived -y
+  ignore_errors: yes
+
+
+- name: 为nfs all 节点分发配置
+  copy: src=nfs_check.sh dest=/etc/keepalived/nfs_check.sh mode=777
+
+- name: 为nfs master配置vip
+  shell: ifconfig  {{ ansible_default_ipv4['interface'] }}:0 {{ nfs_vip }}  netmask 255.255.255.0 up
+  when: ansible_default_ipv4['address']  in groups['nfs-master'] #规定只有ip地址在master组的节点才执行该任务
+
+
+- name: 为nfs master 分发配置文件并配置keepalived
+  template: src={{ item.name }} dest={{ item.path }}
+  with_items:
+    - {name: 'keepalived-master.conf.j2', path: '/etc/keepalived/keepalived.conf'}
+  when: ansible_default_ipv4['address']  in groups['nfs-master'] #规定只有ip地址在master组的节点才执行该任务  
+
+- name: 为nfs slave 分发配置文件并配置keepalived
+  template: src={{ item.name }} dest={{ item.path }}
+  with_items:
+    - {name: 'keepalived-slave.conf.j2', path: '/etc/keepalived/keepalived.conf'}
+  when: ansible_default_ipv4['address']  in groups['nfs-slave']
+
+
+- name: 重启keepalived
+  shell: "systemctl daemon-reload && service keepalived restart"
+
+
+- name: 设置keepalived开机自启
+  service: name=keepalived   state=started enabled=true
+#################################################################
+#file : rsync.pass(slave)  sersync2(master)  user.pass(master)
+#template: rsyncd.conf.j2(slave)  sersync.service.j2 (naster)
+- name: 为主节点sersync2创建目录
+  file: path=/usr/local/sersync2  state=directory
+  when: ansible_default_ipv4['address']  in groups['nfs-master']
+
+
+- name: 为nfs master 分发配置文件d
+  copy: src={{ item.name }} dest={{ item.path }}
+  with_items:
+    - {name: 'sersync2', path: '/usr/local/sersync/sersync2'}
+    - {name: 'user.pass', path: '/usr/local/sersync/user.pass'}
+  when: ansible_default_ipv4['address']  in groups['nfs-master'] #规定只有ip地址在master组的节点才执行该任务
+
+- name: 为nfs slave 分发配置文件
+  copy: src={{ item.name }} dest={{ item.path }}
+  with_items:
+    - {name: 'rsync.pass', path: '/etc/rsync.pass'}
+  when: ansible_default_ipv4['address']  in groups['nfs-slave'] #规定只有ip地址在master组的节点才执行该任务
+
+
+
+
+- name: 为nfs master 渲染配置文件并配置
+  template: src={{ item.name }} dest={{ item.path }}
+  with_items:
+    - {name: 'sersync.service.j2', path: '/lib/systemd/system/sersync.service'}
+  when: ansible_default_ipv4['address']  in groups['nfs-master']
+
+
+
+
+- name: 为nfs slave 渲染配置文件并配置
+  template: src={{ item.name }} dest={{ item.path }}
+  with_items:
+    - {name: 'rsyncd.conf.j2', path: '/etc/rsyncd.conf'}
+  when: ansible_default_ipv4['address']  in groups['nfs-slave']
+
+  
+
+- name: master节点重启服务
+  shell: "systemctl daemon-reload && service sersync2 restart"
+  when: ansible_default_ipv4['address']  in groups['nfs-master']
+
+- name: master节点设置开开机自启
+  service: name=sersync2   state=started enabled=true
+  when: ansible_default_ipv4['address']  in groups['nfs-master']
+
+- name: slave节点重启服务
+  shell: "systemctl daemon-reload && service rsync restart"
+  when: ansible_default_ipv4['address']  in groups['nfs-slave']
+
+- name: slave节点设置开开机自启
+  service: name=rsync   state=started enabled=true
+  when: ansible_default_ipv4['address']  in groups['nfs-slave']

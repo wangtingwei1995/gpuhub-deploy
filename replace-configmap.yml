@@ -1,0 +1,9 @@
+- name: 修改gpuhub configmap
+  hosts: master
+  remote_user: root
+  roles:
+    - replace-configmap
+  vars_files:
+  - environments/{{ ENV }}/group_vars/all.yml 
+  - environments/{{ ENV }}/group_vars/gpuhub.yml 
+
