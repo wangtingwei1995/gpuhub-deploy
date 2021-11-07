@@ -1,0 +1,30 @@
+#################nfs相关配置######################
+
+- name: 分发nfs disk初始化脚本
+  copy: src=disk.sh dest=/tmp/disk.sh
+
+
+- name: nfs磁盘ext4分区以及自动挂载设置
+  script: /tmp/disk.sh "{{ DISK }}" "{{ MOUNT_PATH  }}"   
+
+
+#- name: 增加apt gpushare 专有apt源
+#  shell: echo "当前环境是在线环境，设置apt源为公网源" && sleep 3 && \
+#         mv /etc/apt/sources.list /etc/apt/sources.list.bak && \
+#         echo "deb {{ PUBULIC_REPO }} debs/" >/etc/apt/sources.list
+         
+- name: 下载安装nfs
+  shell: export DEBIAN_FRONTEND=noninteractive && apt  update  --allow-insecure-repositories && apt install nfs-kernel-server -y
+  ignore_errors: yes
+
+
+- name: 分发配置文件并配置nfs
+  template: src=nfs.conf.j2 dest=/etc/exports
+
+- name: 重启nfs配置
+  shell: "systemctl daemon-reload && service nfs-kernel-server restart"
+
+
+- name: 设置nfs开机自启
+  service: name=nfs-kernel-server   state=started enabled=true
+

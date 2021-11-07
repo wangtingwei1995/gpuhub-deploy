@@ -1,0 +1,34 @@
+#########################keepalive相关配置############
+
+- name: 下载安装keepalived
+  shell: export DEBIAN_FRONTEND=noninteractive && apt  update  --allow-insecure-repositories && apt install keepalived -y
+  ignore_errors: yes
+
+
+- name: 为nfs all 节点分发配置
+  copy: src=nfs_check.sh dest=/etc/keepalived/nfs_check.sh mode=777
+
+- name: 为nfs master配置vip
+  shell: ifconfig  {{ ansible_default_ipv4['interface'] }}:0 {{ nfs_vip }}  netmask 255.255.255.0 up
+  when: ansible_default_ipv4['address']  in groups['nfs-master'] #规定只有ip地址在master组的节点才执行该任务
+
+
+- name: 为nfs master 分发配置文件并配置keepalived
+  template: src={{ item.name }} dest={{ item.path }}
+  with_items:
+    - {name: 'keepalived-master.conf.j2', path: '/etc/keepalived/keepalived.conf'}
+  when: ansible_default_ipv4['address']  in groups['nfs-master'] #规定只有ip地址在master组的节点才执行该任务  
+
+- name: 为nfs slave 分发配置文件并配置keepalived
+  template: src={{ item.name }} dest={{ item.path }}
+  with_items:
+    - {name: 'keepalived-slave.conf.j2', path: '/etc/keepalived/keepalived.conf'}
+  when: ansible_default_ipv4['address']  in groups['nfs-slave']
+
+
+- name: 重启keepalived
+  shell: "systemctl daemon-reload && service keepalived restart"
+
+
+- name: 设置keepalived开机自启
+  service: name=keepalived   state=started enabled=true

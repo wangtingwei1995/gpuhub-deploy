@@ -1,0 +1,54 @@
+######################rsync与sersync配置###########################################
+- name: 为主节点sersync2创建目录
+  file: path=/usr/local/sersync2  state=directory
+  when: ansible_default_ipv4['address']  in groups['nfs-master']
+
+
+- name: 为nfs master 分发配置文件d
+  copy: src={{ item.name }} dest={{ item.path }}
+  with_items:
+    - {name: 'sersync2', path: '/usr/local/sersync/sersync2'}
+    - {name: 'user.pass', path: '/usr/local/sersync/user.pass'}
+  when: ansible_default_ipv4['address']  in groups['nfs-master'] #规定只有ip地址在master组的节点才执行该任务
+
+- name: 为nfs slave 分发配置文件
+  copy: src={{ item.name }} dest={{ item.path }}
+  with_items:
+    - {name: 'rsync.pass', path: '/etc/rsync.pass'}
+  when: ansible_default_ipv4['address']  in groups['nfs-slave'] #规定只有ip地址在master组的节点才执行该任务
+
+
+
+
+- name: 为nfs master 渲染配置文件并配置
+  template: src={{ item.name }} dest={{ item.path }}
+  with_items:
+    - {name: 'sersync.service.j2', path: '/lib/systemd/system/sersync.service'}
+  when: ansible_default_ipv4['address']  in groups['nfs-master']
+
+
+
+
+- name: 为nfs slave 渲染配置文件并配置
+  template: src={{ item.name }} dest={{ item.path }}
+  with_items:
+    - {name: 'rsyncd.conf.j2', path: '/etc/rsyncd.conf'}
+  when: ansible_default_ipv4['address']  in groups['nfs-slave']
+
+  
+
+- name: master节点重启服务
+  shell: "systemctl daemon-reload && service sersync2 restart"
+  when: ansible_default_ipv4['address']  in groups['nfs-master']
+
+- name: master节点设置开开机自启
+  service: name=sersync2   state=started enabled=true
+  when: ansible_default_ipv4['address']  in groups['nfs-master']
+
+- name: slave节点重启服务
+  shell: "systemctl daemon-reload && service rsync restart"
+  when: ansible_default_ipv4['address']  in groups['nfs-slave']
+
+- name: slave节点设置开开机自启
+  service: name=rsync   state=started enabled=true
+  when: ansible_default_ipv4['address']  in groups['nfs-slave']
